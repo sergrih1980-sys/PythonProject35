@@ -1,0 +1,13 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .viewsets import CourseViewSet
+from .views import LessonListCreateView, LessonRetrieveUpdateDestroyView
+
+router = DefaultRouter()
+router.register(r'courses', CourseViewSet, basename='course')
+
+urlpatterns = [
+    path('', include(router.urls)),           # <-- так можно, потому что include уже импортирован
+    path('lessons/', LessonListCreateView.as_view(), name='lesson-list-create'),
+    path('lessons/<int:pk>/', LessonRetrieveUpdateDestroyView.as_view(), name='lesson-detail'),
+]
