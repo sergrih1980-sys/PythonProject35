@@ -7,7 +7,8 @@ router = DefaultRouter()
 router.register(r'courses', CourseViewSet, basename='course')
 
 urlpatterns = [
-    path('', include(router.urls)),           # <-- так можно, потому что include уже импортирован
+    path('', include(router.urls)),
     path('lessons/', LessonListCreateView.as_view(), name='lesson-list-create'),
     path('lessons/<int:pk>/', LessonRetrieveUpdateDestroyView.as_view(), name='lesson-detail'),
+
 ]
