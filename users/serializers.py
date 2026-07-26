@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Payment
 from courses.serializers import CourseSerializer, LessonSerializer
+from django.contrib.auth.password_validation import validate_password
+
 
 User = get_user_model()
 
@@ -49,3 +51,28 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = ['id', 'is_staff']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'username', 'phone', 'city', 'avatar']  # подстрой под свои поля
+        read_only_fields = ['id']
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+    class Meta:
+        model = User
+        fields = ['email', 'username', 'password', 'phone', 'city', 'avatar']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data.get('username'),
+            password=validated_data['password'],
+            phone=validated_data.get('phone'),
+            city=validated_data.get('city'),
+            avatar=validated_data.get('avatar'),
+        )
+        return user
