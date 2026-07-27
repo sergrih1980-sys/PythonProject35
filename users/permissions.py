@@ -1,15 +1,10 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 
-class IsModerator(permissions.BasePermission):
-    """Разрешает доступ только пользователям из группы 'moderator'."""
-
+class IsModerator(BasePermission):
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
+        user = request.user
+        if user.is_superuser:
+            return True
+        if not user.is_authenticated:
             return False
-        return request.user.groups.filter(name='moderator').exists()
-
-    def has_object_permission(self, request, view, obj):
-        # Для действий с объектом (retrieve, update, partial_update, destroy)
-        if not request.user.is_authenticated:
-            return False
-        return request.user.groups.filter(name='moderator').exists()
+        return user.groups.filter(name='moderator').exists()
