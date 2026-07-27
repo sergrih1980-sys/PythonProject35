@@ -1,25 +1,32 @@
-from django.db import models
+
 from django.conf import settings
+
 from django.contrib.auth.models import AbstractUser
-from courses.models import Course, Lesson
+from django.db import models
+
 from django.contrib.auth.models import BaseUserManager
+
+from courses.models import Course, Lesson
 
 
 class User(AbstractUser):
-    """Кастомная модель пользователя: вход по email, дополнительные поля."""
+    """
+    Кастомная модель пользователя: авторизация по email.
+    """
+    email = models.EmailField("Email", unique=True)
+    phone = models.CharField("Телефон", max_length=20, blank=True)
+    city = models.CharField("Город", max_length=100, blank=True)
+    avatar = models.ImageField("Аватар", upload_to='avatars/', blank=True, null=True)
 
-    username = None  # отключаем username
-    email = models.EmailField("email address", unique=True)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']  # username оставляем, но вход по email
 
-    phone = models.CharField("телефон", max_length=20, blank=True)
-    city = models.CharField("город", max_length=100, blank=True)
-    avatar = models.ImageField("аватар", upload_to="avatars/", blank=True, null=True)
-
-    USERNAME_FIELD = "email"  # по чему логиниться
-    REQUIRED_FIELDS = []       # никаких обязательных полей кроме email и пароля
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
     def __str__(self):
-        return self.email
+        return self.email or self.username
 
 
 class Payment(models.Model):

@@ -1,37 +1,19 @@
 from rest_framework import serializers
 from .models import Course, Lesson
 
+class CourseSerializer(serializers.ModelSerializer):
+    author_email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        # author здесь нет — он заполняется автоматически
+        fields = ['id', 'title', 'description', 'author_email', 'created_at', 'updated_at']
+
+    def get_author_email(self, obj):
+        return obj.author.email if obj.author else None
+
 
 class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
-        fields = [
-            'id',
-            'title',
-            'description',
-            'preview',
-            'video_url',
-            'order',
-            'created_at',
-        ]
-
-
-class CourseSerializer(serializers.ModelSerializer):
-    lessons_count = serializers.SerializerMethodField()
-    lessons = LessonSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Course
-        fields = [
-            'id',
-            'title',
-            'preview',
-            'description',
-            'created_at',
-            'lessons_count',
-            'lessons',
-        ]
-
-    def get_lessons_count(self, obj):
-
-        return obj.lessons.count()
+        fields = ['id', 'course', 'title', 'content', 'order', 'created_at']
