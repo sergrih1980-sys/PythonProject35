@@ -1,11 +1,19 @@
-from rest_framework import viewsets, permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, permissions, status
 from rest_framework.exceptions import PermissionDenied
-from .models import Course, Lesson
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Course, Lesson, Subscription
+from .paginators import StandardResultsSetPagination
 from .serializers import CourseSerializer, LessonSerializer
 from users.permissions import IsModerator
 
 class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -51,7 +59,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 
 class LessonViewSet(viewsets.ModelViewSet):
+    queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -96,3 +106,25 @@ class LessonViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [IsModerator()]
         return [permissions.IsAuthenticated()]
+
+
+class ToggleSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_id):
+        # course_id уже передан Django из URL — просто используем его
+        course = get_object_or_404(Course, pk=course_id)
+        user = request.user
+
+        subs_item = Subscription.objects.filter(user=user, course=course).first()
+
+        if subs_item:
+            subs_item.delete()
+            message = "Подписка удалена"
+            status_code = status.HTTP_200_OK
+        else:
+            Subscription.objects.create(user=user, course=course)
+            message = "Подписка добавлена"
+            status_code = status.HTTP_201_CREATED
+
+        return Response({"message": message}, status=status_code)

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Course(models.Model):
     """
@@ -39,6 +40,7 @@ class Lesson(models.Model):
     content = models.TextField("Контент урока", blank=True)
     order = models.PositiveIntegerField("Порядок", default=0)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    video_url = models.URLField("Ссылка на видео", blank=True, null=True)
 
     class Meta:
         verbose_name = "Урок"
@@ -47,3 +49,29 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.course.title} — {self.title}"
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name="Пользователь"
+    )
+    course = models.ForeignKey(
+        'Course',
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name="Курс"
+    )
+    created_at = models.DateTimeField(
+        "Дата подписки",
+        auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
+        unique_together = ('user', 'course')  # защита от дублей на уровне БД
+
+    def __str__(self):
+        return f"{self.user.email} → {self.course.title}"

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "courses",
     'django_filters',
     'rest_framework_simplejwt',
+    'django_extensions',
 ]
 
 
