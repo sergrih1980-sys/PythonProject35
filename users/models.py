@@ -32,6 +32,8 @@ class User(AbstractUser):
 class Payment(models.Model):
     """Модель платежа: за курс или за урок."""
 
+
+
     PAYMENT_METHOD_CHOICES = [
         ('cash', 'Наличные'),
         ('transfer', 'Перевод на счёт'),
@@ -63,6 +65,28 @@ class Payment(models.Model):
         default='transfer'
     )
     paid_at = models.DateTimeField(null=True, blank=True)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey('courses.Course', null=True, blank=True, on_delete=models.SET_NULL)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)  # в рублях
+    currency = models.CharField(max_length=3, default='RUB')
+
+    # данные Stripe
+    stripe_product_id = models.CharField(max_length=255, blank=True)
+    stripe_price_id = models.CharField(max_length=255, blank=True)
+    stripe_session_id = models.CharField(max_length=255, blank=True)
+    checkout_url = models.URLField(blank=True)
+
+    status = models.CharField(
+        max_length=50,
+        default='pending',  # pending, paid, failed
+        choices=[
+            ('pending', 'Ожидает оплаты'),
+            ('paid', 'Оплачено'),
+            ('failed', 'Отклонено'),
+        ]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.email} — {self.amount} ({self.payment_method})"
