@@ -1,14 +1,15 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Course, Lesson, Subscription
-from .paginators import StandardResultsSetPagination
 from .serializers import CourseSerializer, LessonSerializer
+from .paginators import StandardResultsSetPagination
+from .tasks import send_course_update_notification
 from users.permissions import IsModerator
+
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -27,12 +28,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Проверка: создавать могут только модераторы и суперпользователи
         is_moderator = user.groups.filter(name='moderator').exists()
         if not is_moderator and not user.is_superuser:
             raise PermissionDenied("Создавать курсы могут только модераторы и суперпользователи.")
-
-        # АВТОМАТИЧЕСКАЯ привязка автора из запроса
         serializer.save(author=user)
 
     def perform_update(self, serializer):
@@ -42,7 +40,25 @@ class CourseViewSet(viewsets.ModelViewSet):
         is_moderator = user.groups.filter(name='moderator').exists()
         if not is_moderator and instance.author != user:
             raise PermissionDenied("Вы можете редактировать только свои курсы.")
-        serializer.save()
+
+        updated = serializer.save()
+
+        # Сбор изменённых полей
+        old_data = {f.name: getattr(instance, f.name) for f in instance._meta.fields}
+        new_data = {f.name: getattr(updated, f.name) for f in updated._meta.fields}
+        changed_fields = [
+            f for f in old_data.keys()
+            if old_data[f] != new_data[f]
+        ]
+
+        if changed_fields:
+            send_course_update_notification.delay(
+                course_id=updated.id,
+                course_title=updated.title,
+                updated_fields=changed_fields,
+            )
+
+        return updated
 
     def perform_destroy(self, instance):
         user = self.request.user
@@ -53,7 +69,6 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            # Только модераторы/суперпользователи могут создавать
             return [IsModerator()]
         return [permissions.IsAuthenticated()]
 
@@ -71,7 +86,6 @@ class LessonViewSet(viewsets.ModelViewSet):
         if user.groups.filter(name='moderator').exists() or user.is_superuser:
             return Lesson.objects.all()
 
-        # Обычный пользователь видит только уроки своих курсов
         return Lesson.objects.filter(course__author=user)
 
     def perform_create(self, serializer):
@@ -79,8 +93,6 @@ class LessonViewSet(viewsets.ModelViewSet):
         is_moderator = user.groups.filter(name='moderator').exists()
         if not is_moderator and not user.is_superuser:
             raise PermissionDenied("Создавать уроки могут только модераторы и суперпользователи.")
-
-        # Автор не нужен: он уже есть у курса
         serializer.save()
 
     def perform_update(self, serializer):
@@ -109,10 +121,9 @@ class LessonViewSet(viewsets.ModelViewSet):
 
 
 class ToggleSubscriptionView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, course_id):
-        # course_id уже передан Django из URL — просто используем его
         course = get_object_or_404(Course, pk=course_id)
         user = request.user
 
