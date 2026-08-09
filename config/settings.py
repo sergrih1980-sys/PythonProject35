@@ -135,3 +135,31 @@ SIMPLE_JWT = {
 
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "sk_test_...")
 STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", "pk_test_...")
+
+
+# --- Celery / Redis ---
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+
+CELERY_TIMEZONE = os.getenv("DJANGO_TIME_ZONE", "UTC")
+CELERY_ENABLE_UTC = True
+
+CELERY_BEAT_SCHEDULE = {
+    "deactivate-inactive-users-daily": {
+        "task": "users.tasks.deactivate_inactive_users",
+        # каждый день в 03:00 по CELERY_TIMEZONE
+        "schedule": timedelta(hours=24),
+        # опционально: args/kwargs, если понадобятся
+        # "args": (),
+        # "kwargs": {},
+    },
+}
+
+# Для надёжной обработки задач (не терять при перезапуске воркера)
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# --- django-celery-beat (периодические задачи через БД) ---
+INSTALLED_APPS += ['django_celery_beat']
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

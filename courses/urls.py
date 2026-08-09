@@ -7,6 +7,6 @@ router.register(r'courses', CourseViewSet, basename='course')
 router.register(r'lessons', LessonViewSet, basename='lesson')
 
 urlpatterns = [
-    path('<int:course_id>/subscribe/', ToggleSubscriptionView.as_view(), name='toggle-subscription'),
     path('', include(router.urls)),
+    path('courses/<int:course_id>/subscribe/', ToggleSubscriptionView.as_view(), name='toggle-subscription'),
 ]
