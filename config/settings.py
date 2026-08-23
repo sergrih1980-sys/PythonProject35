@@ -6,17 +6,19 @@ from dotenv import load_dotenv
 
 from pathlib import Path
 
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+
+
+
+SECRET_KEY = "django-insecure-supersecretkey-change-in-production-1234567890abcdef"
 
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -73,7 +75,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRES_DB", "dbname"),
         "USER": os.getenv("POSTGRES_USER", "user"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "password"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "SeRg09101980!"),
         "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
