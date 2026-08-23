@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from pathlib import Path
 
-load_dotenv()
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -74,7 +74,7 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB", "dbname"),
         "USER": os.getenv("POSTGRES_USER", "user"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "password"),
-        "HOST": os.getenv("POSTGRES_HOST", "db"),
+        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
