@@ -19,4 +19,5 @@
 
 1. Установи зависимости в виртуальном окружении:
    ```bash
+   
    pip install djangorestframework Pillow
