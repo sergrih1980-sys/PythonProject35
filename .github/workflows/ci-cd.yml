@@ -1,0 +1,90 @@
+name: CI/CD Pipeline for PythonProject35
+
+on:
+  push:
+    branches:
+      - main
+  # можно добавить pull_request для запуска тестов на PR, если нужно
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Load environment variables (for tests)
+        # Если у тебя есть .env для тестов — не коммить его, а задать секреты
+        env:
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # добавь другие переменные, нужные для тестов
+        run: echo "Env vars loaded for tests"
+
+      - name: Install dependencies
+        run: poetry install --no-root
+
+      - name: Run migrations (опционально, если тесты требуют БД)
+        run: poetry run python manage.py migrate --noinput
+
+      - name: Run tests
+        run: poetry run pytest --cov=src  # подстрой путь к коду (src или PythonProject35)
+
+  deploy:
+    name: Deploy to production
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy script
+        id: prepare
+        run: |
+          cat > deploy.sh << 'EOF'
+          set -euo pipefail
+
+          cd /opt/PythonProject35
+          git pull origin main
+
+          # Пересоздавать venv не нужно, если используешь Docker; если без Docker — раскомментируй:
+          # poetry config virtualenvs.create false
+          # poetry install --no-interaction
+
+          # Если деплой через docker-compose:
+          docker compose pull
+          docker compose up -d --build
+
+          # Миграции (в контейнере или на хосте — выбери один вариант)
+          docker compose exec web python manage.py migrate --noinput
+
+          # Статика
+          docker compose exec web python manage.py collectstatic --noinput
+
+          # (Опционально) перезапуск celery/beat, если они не в docker-compose
+          # docker restart pythonproject35_worker pythonproject35_beat
+
+          echo "Deploy complete"
+          EOF
+          chmod +x deploy.sh
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.8.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: ./deploy.sh
