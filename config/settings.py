@@ -30,15 +30,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     "rest_framework",
     "users",
     "courses",
-    'django_filters',
-    'rest_framework_simplejwt',
-    'django_extensions',
-    'drf_yasg',
+    "django_filters",
+    "rest_framework_simplejwt",
+    "django_extensions",
+    "drf_yasg",
+    "django_celery_beat",
 ]
-
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -107,10 +108,8 @@ USE_I18N = True
 USE_TZ = True
 
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 AUTH_USER_MODEL = "users.User"
 
@@ -165,10 +164,11 @@ CELERY_BEAT_SCHEDULE = {
 CELERY_TASK_ACKS_LATE = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
-# --- django-celery-beat (периодические задачи через БД) ---
-INSTALLED_APPS += ['django_celery_beat']
+
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web", "nginx"]

@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 from users.models import User
+import logging
 
 @shared_task
 def deactivate_inactive_users():
@@ -30,3 +31,11 @@ def deactivate_inactive_users():
         "count": count,
         "cutoff_date": cutoff_date.isoformat(),
     }
+
+logger = logging.getLogger(__name__)
+
+@shared_task
+def test_celery_task():
+    logger.info("✅ Celery task test_celery_task() was executed!")
+    return "OK"
+
