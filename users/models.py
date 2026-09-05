@@ -1,32 +1,39 @@
-
-from django.conf import settings
-
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-from django.contrib.auth.models import BaseUserManager
-
+from config import settings
 from courses.models import Course, Lesson
 
 
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email is required')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
+
+
 class User(AbstractUser):
-    """
-    Кастомная модель пользователя: авторизация по email.
-    """
-    email = models.EmailField("Email", unique=True)
-    phone = models.CharField("Телефон", max_length=20, blank=True)
-    city = models.CharField("Город", max_length=100, blank=True)
-    avatar = models.ImageField("Аватар", upload_to='avatars/', blank=True, null=True)
+    # Убираем username из модели
+    username = None
+    email = models.EmailField('email address', unique=True)
 
+    # Говорим Django использовать email как логин
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']  # username оставляем, но вход по email
+    REQUIRED_FIELDS = []  # username уже не обязателен
 
-    class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
+    objects = UserManager()
 
     def __str__(self):
-        return self.email or self.username
+        return self.email
 
 
 class Payment(models.Model):

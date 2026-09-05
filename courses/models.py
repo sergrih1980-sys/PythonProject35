@@ -8,12 +8,8 @@ class Course(models.Model):
     title = models.CharField("Название курса", max_length=255)
     description = models.TextField("Описание", blank=True)
 
-    author = models.ForeignKey(
-        'users.User',
-        on_delete=models.CASCADE,
-        related_name='courses',
-        verbose_name="Автор"
-    )
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 

@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 
 from datetime import timedelta
 
@@ -72,14 +73,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "dbname"),
-        "USER": os.getenv("POSTGRES_USER", "user"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "SeRg09101980!"),
-        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL', 'postgres://postgres:SeRg09101980!@db:5432/dbname')
+    )
 }
 
 

@@ -16,31 +16,47 @@ class CoursesAPITest(APITestCase):
         self.moderator_group, _ = Group.objects.get_or_create(name='moderator')
 
         # Пользователи
+        # Обычный пользователь
         self.user = User.objects.create_user(
-            email='user@example.com', username='user', password='pass'
+            email='test@test.com',
+            password='pass'
         )
+
+        # Модератор: только email и пароль, без username
         self.moderator = User.objects.create_user(
-            email='mod@example.com', username='mod', password='pass'
+            email='mod@example.com',
+            password='pass'
         )
         self.moderator.groups.add(self.moderator_group)
+
+        # Суперпользователь: тоже без username
         self.superuser = User.objects.create_superuser(
-            email='admin@example.com', username='admin', password='pass'
+            email='admin@example.com',
+            password='pass'
         )
 
         # Курсы
         self.course_by_user = Course.objects.create(
-            title='Course by user', description='User course', author=self.user
+            title='Course by user',
+            description='User course',
+            author=self.user
         )
         self.course_by_mod = Course.objects.create(
-            title='Course by mod', description='Mod course', author=self.moderator
+            title='Course by mod',
+            description='Mod course',
+            author=self.moderator
         )
 
         # Уроки
         self.lesson_by_user = Lesson.objects.create(
-            title='Lesson by user', content='Content', course=self.course_by_user
+            title='Lesson by user',
+            content='Content',
+            course=self.course_by_user
         )
         self.lesson_by_mod = Lesson.objects.create(
-            title='Lesson by mod', content='Content', course=self.course_by_mod
+            title='Lesson by mod',
+            content='Content',
+            course=self.course_by_mod
         )
 
     # -----------------------------
@@ -51,7 +67,6 @@ class CoursesAPITest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get('/api/lessons/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Обычный пользователь видит только уроки своих курсов (course__author == self.user)
         data = response.json()
         results = data['results']
         self.assertIn(self.lesson_by_user.id, [r['id'] for r in results])
@@ -73,7 +88,11 @@ class CoursesAPITest(APITestCase):
             "content": "Content",
             "course": self.course_by_user.id
         }
-        response = self.client.post('/api/lessons/', data=json.dumps(payload), content_type='application/json')
+        response = self.client.post(
+            '/api/lessons/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_lesson_moderator_allowed(self):
@@ -83,7 +102,11 @@ class CoursesAPITest(APITestCase):
             "content": "Content",
             "course": self.course_by_mod.id
         }
-        response = self.client.post('/api/lessons/', data=json.dumps(payload), content_type='application/json')
+        response = self.client.post(
+            '/api/lessons/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         created_id = response.data['id']
         lesson = Lesson.objects.get(id=created_id)
@@ -99,9 +122,10 @@ class CoursesAPITest(APITestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Lesson.objects.get(id=self.lesson_by_mod.id).title, payload['title'])
-
-
+        self.assertEqual(
+            Lesson.objects.get(id=self.lesson_by_mod.id).title,
+            payload['title']
+        )
 
     def test_delete_lesson_own_course_allowed(self):
         self.client.force_authenticate(user=self.moderator)
@@ -109,13 +133,7 @@ class CoursesAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Lesson.objects.filter(id=self.lesson_by_mod.id).exists())
 
-
-
-
     def test_debug_check(self):
         response = self.client.get('/debug/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode(), "OK")
-from django.test import TestCase
-
-
