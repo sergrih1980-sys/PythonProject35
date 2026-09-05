@@ -1,0 +1,58 @@
+@"
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install --no-root
+
+      - name: Run tests
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          DATABASE_URL: sqlite:///test_db.sqlite3
+        run: poetry run pytest --cov=config --cov=courses --cov=users
+
+  deploy:
+    name: Deploy to production
+    needs: tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/pythonproject35
+            git pull origin main
+            docker compose up -d --build
+            docker compose exec -T web python manage.py migrate --noinput
+            docker compose exec -T web python manage.py collectstatic --noinput
+            docker compose restart web worker beat
+            echo "Deploy complete"
+"@ | Out-File -FilePath ".github\workflows\deploy.yml" -Encoding UTF8
