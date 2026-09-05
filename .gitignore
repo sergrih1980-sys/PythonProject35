@@ -57,7 +57,10 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-test_db.sqlite3          # <-- ВАЖНО: добавляем именно твоё имя файла
+test_db.sqlite3
+# SQLite databases
+*.sqlite3
+*.db
 
 # Celery stuff
 celerybeat-schedule
