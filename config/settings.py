@@ -1,25 +1,16 @@
 import os
 import dj_database_url
-
 from datetime import timedelta
-
 from dotenv import load_dotenv
-
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=False)
 
-
-
-
-SECRET_KEY = "django-insecure-supersecretkey-change-in-production-1234567890abcdef"
-
-
-DEBUG = True
-
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-supersecretkey-change-in-production-1234567890abcdef')
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,web,nginx').split(',')
 
 
 # Application definition
@@ -74,9 +65,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL', 'postgres://postgres:SeRg09101980!@db:5432/dbname')
+        os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
     )
 }
+
 
 
 AUTH_PASSWORD_VALIDATORS = [
