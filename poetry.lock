@@ -1494,6 +1494,7 @@ files = [
 [package.dependencies]
 attrs = ">=22.2.0"
 rpds-py = ">=0.7.0"
+typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "requests"
@@ -1799,5 +1800,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.13"
-content-hash = "c6626ef5dc052627bdbce079c5f0602663e1c421199bc122cf82ac37b0eca4be"
+python-versions = "^3.12"
+content-hash = "7ac545b0e82dcf016e46d6a653ced3e4d45278926e411ae472d0f7bb60317946"
