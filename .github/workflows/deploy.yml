@@ -1,4 +1,4 @@
-@"
+
 name: CI/CD
 
 on:
@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-         python-version: "3.12"
+          python-version: "3.12"
 
       - name: Install Poetry
         run: |
@@ -55,4 +55,3 @@ jobs:
             docker compose exec -T web python manage.py collectstatic --noinput
             docker compose restart web worker beat
             echo "Deploy complete"
-"@ | Out-File -FilePath ".github\workflows\deploy.yml" -Encoding UTF8
